@@ -40,12 +40,18 @@ TXT_DB *TXT_DB_read(BIO *in, int num)
     ret->index = NULL;
     ret->qual = NULL;
     ret->error = DB_ERROR_OK;
-    if ((ret->data = sk_OPENSSL_PSTRING_new_null()) == NULL)
-        goto err;
-    if ((ret->index = OPENSSL_malloc(sizeof(*ret->index) * num)) == NULL)
-        goto err;
-    if ((ret->qual = OPENSSL_malloc(sizeof(*(ret->qual)) * num)) == NULL)
-        goto err;
+    if ((ret->data = sk_OPENSSL_PSTRING_new_null()) == NULL) {
+        ret->error = DB_ERROR_MALLOC;
+        goto err1;
+    }
+    if ((ret->index = OPENSSL_malloc(sizeof(*ret->index) * num)) == NULL) {
+        ret->error = DB_ERROR_MALLOC;
+        goto err1;
+    }
+    if ((ret->qual = OPENSSL_malloc(sizeof(*(ret->qual)) * num)) == NULL) {
+        ret->error = DB_ERROR_MALLOC;
+        goto err1;
+    }
     for (i = 0; i < num; i++) {
         ret->index[i] = NULL;
         ret->qual[i] = NULL;
@@ -57,8 +63,10 @@ TXT_DB *TXT_DB_read(BIO *in, int num)
     for (;;) {
         if (offset != 0) {
             size += BUFSIZE;
-            if (!BUF_MEM_grow_clean(buf, size))
-                goto err;
+            if (!BUF_MEM_grow_clean(buf, size)) {
+                ret->error = DB_ERROR_MALLOC;
+                goto err1;
+            }
         }
         buf->data[offset] = '\0';
         BIO_gets(in, &(buf->data[offset]), size - offset);
@@ -73,8 +81,10 @@ TXT_DB *TXT_DB_read(BIO *in, int num)
             continue;
         else {
             buf->data[offset - 1] = '\0'; /* blat the '\n' */
-            if ((p = OPENSSL_malloc(add + offset)) == NULL)
-                goto err;
+            if ((p = OPENSSL_malloc(add + offset)) == NULL) {
+                ret->error = DB_ERROR_MALLOC;
+                goto err1;
+            }
             offset = 0;
         }
         pp = (char **)p;
@@ -113,7 +123,8 @@ TXT_DB *TXT_DB_read(BIO *in, int num)
         pp[n] = p;
         if (!sk_OPENSSL_PSTRING_push(ret->data, pp)) {
             OPENSSL_free(pp);
-            goto err;
+            ret->error = DB_ERROR_MALLOC;
+            goto err1;
         }
     }
  err1:
