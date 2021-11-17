@@ -1632,7 +1632,7 @@ CA_DB *load_index(const char *dbfile, DB_ATTR *db_attr)
     }
 #endif
 
-    if ((tmpdb = TXT_DB_read(in, DB_NUMBER)) == NULL)
+    if ((tmpdb = TXT_DB_read(in, DB_NUMBER)) == NULL || tmpdb->error)
         goto err;
 
 #ifndef OPENSSL_SYS_VMS

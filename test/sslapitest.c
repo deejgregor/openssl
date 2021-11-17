@@ -6783,7 +6783,7 @@ static int create_new_vfile(char *userid, char *password, const char *filename)
      * in it!
      */
     db = TXT_DB_read(dummy, DB_NUMBER);
-    if (!TEST_ptr(db))
+    if (!TEST_ptr(db) || db->error)
         goto end;
 
     out = BIO_new_file(filename, "w");

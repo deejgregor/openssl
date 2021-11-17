@@ -412,7 +412,7 @@ int SRP_VBASE_init(SRP_VBASE *vb, char *verifier_file)
 
     error_code = SRP_ERR_VBASE_INCOMPLETE_FILE;
 
-    if ((tmpdb = TXT_DB_read(in, DB_NUMBER)) == NULL)
+    if ((tmpdb = TXT_DB_read(in, DB_NUMBER)) == NULL || tmpdb->error)
         goto err;
 
     error_code = SRP_ERR_MEMORY;
