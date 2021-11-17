@@ -1632,8 +1632,19 @@ CA_DB *load_index(const char *dbfile, DB_ATTR *db_attr)
     }
 #endif
 
-    if ((tmpdb = TXT_DB_read(in, DB_NUMBER)) == NULL || tmpdb->error) {
-        BIO_printf(bio_err, "TXT_DB_read failed reading %s\n", dbfile);
+    if ((tmpdb = TXT_DB_read(in, DB_NUMBER)) == NULL) {
+        BIO_printf(bio_err, "TXT_DB_read returned NULL when reading %s\n", dbfile);
+        goto err;
+    }
+    if (tmpdb->error) {
+        if (tmpdb->error == DB_ERROR_WRONG_NUM_FIELDS)
+            BIO_printf(bio_err,
+                       "wrong number of fields on line %ld of %s (looking for %d fields)\n",
+                       tmpdb->arg1, dbfile, tmpdb->num_fields);
+        else
+            BIO_printf(bio_err,
+                       "error reading TXT DB %s:(%ld)\n",
+                       dbfile, tmpdb->error);
         goto err;
     }
 
