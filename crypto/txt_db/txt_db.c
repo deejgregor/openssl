@@ -39,6 +39,7 @@ TXT_DB *TXT_DB_read(BIO *in, int num)
     ret->num_fields = num;
     ret->index = NULL;
     ret->qual = NULL;
+    ret->error = DB_ERROR_OK;
     if ((ret->data = sk_OPENSSL_PSTRING_new_null()) == NULL)
         goto err;
     if ((ret->index = OPENSSL_malloc(sizeof(*ret->index) * num)) == NULL)
@@ -106,7 +107,8 @@ TXT_DB *TXT_DB_read(BIO *in, int num)
         if ((n != num) || (*f != '\0')) {
             OPENSSL_free(pp);
             ret->error = DB_ERROR_WRONG_NUM_FIELDS;
-            goto err;
+            ret->arg1 = ln;
+            goto err1;
         }
         pp[n] = p;
         if (!sk_OPENSSL_PSTRING_push(ret->data, pp)) {
@@ -114,6 +116,7 @@ TXT_DB *TXT_DB_read(BIO *in, int num)
             goto err;
         }
     }
+ err1:
     BUF_MEM_free(buf);
     return ret;
  err:
